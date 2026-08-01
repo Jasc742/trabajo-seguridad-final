@@ -1,0 +1,59 @@
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+    container_name: billetera_v2_nginx
+    ports:
+      - "8443:443"
+      - "8090:80"          # solo para forzar redirect a HTTPS (evita choque con V1 en 8080)
+    volumes:
+      - ./app/src:/var/www/html:ro   # solo lectura desde nginx
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - billetera_v2_net
+    restart: unless-stopped
+
+  app:
+    build:
+      context: ./app
+    container_name: billetera_v2_app
+    volumes:
+      - ./app/src:/var/www/html
+      - uploads_privados_v2:/var/www/uploads_privados
+    environment:
+      DB_HOST: db
+      DB_NAME: billetera_v2
+      DB_USER: billetera_user
+      DB_PASS: ${DB_PASSWORD}          # SEC-FIX: viene de .env, no hardcodeado
+    depends_on:
+      - db
+    networks:
+      - billetera_v2_net
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: billetera_v2_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: billetera_v2
+      MYSQL_USER: billetera_user
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    # SEC-FIX: NO se expone el puerto 3306 al host
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data_v2:/var/lib/mysql
+    networks:
+      - billetera_v2_net
+    restart: unless-stopped
+
+networks:
+  billetera_v2_net:
+    driver: bridge
+
+volumes:
+  db_data_v2:
+  uploads_privados_v2:

@@ -1,0 +1,20 @@
+# Variables de entorno reales (nunca subir)
+.env
+!v2-remediada/.env.example
+
+# Certificados (V1 no usa; V2 los incluye a proposito para que el lab funcione
+# "out of the box", pero en un repo real irian aqui tambien)
+# *.pem
+# *.key
+
+# Uploads de prueba
+v1-vulnerable/app/src/uploads/*
+!v1-vulnerable/app/src/uploads/.gitkeep
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+
+# Docker
+db_data*/

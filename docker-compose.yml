@@ -1,0 +1,138 @@
+
+# ============================================================
+# Compose combinado: levanta V1 (vulnerable) y V2 (remediada)
+# al mismo tiempo, para comparar comportamiento en vivo.
+#
+# Uso:
+#   docker compose up -d --build
+#   docker compose down -v
+#
+# Requiere que exista v2-remediada/.env (copiar desde
+# v2-remediada/.env.example) antes de levantar.
+#
+# Los compose individuales (v1-vulnerable/docker-compose.yml y
+# v2-remediada/docker-compose.yml) siguen funcionando de forma
+# independiente si prefieres levantar solo una version.
+# ============================================================
+
+services:
+
+  # ---------------- V1 - VULNERABLE ----------------
+  v1-app:
+    build:
+      context: ./v1-vulnerable/app
+      dockerfile: Dockerfile
+    container_name: billetera_v1_app
+    environment:
+      DB_HOST: v1-db
+    ports:
+      - "8080:80"
+    volumes:
+      - ./v1-vulnerable/app/src:/var/www/html
+    depends_on:
+      - v1-db
+    networks:
+      - billetera_v1_net
+    restart: unless-stopped
+
+  v1-db:
+    image: mysql:8.0
+    container_name: billetera_v1_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: billetera_v1
+      MYSQL_USER: billetera_user
+      MYSQL_PASSWORD: billetera123
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./v1-vulnerable/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data_v1:/var/lib/mysql
+    networks:
+      billetera_v1_net:
+        aliases:
+          - db
+    restart: unless-stopped
+
+  v1-phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: billetera_v1_pma
+    environment:
+      PMA_HOST: v1-db
+      PMA_USER: root
+      PMA_PASSWORD: root123
+    ports:
+      - "8081:80"
+    depends_on:
+      - v1-db
+    networks:
+      - billetera_v1_net
+    restart: unless-stopped
+
+  # ---------------- V2 - REMEDIADA ----------------
+  v2-nginx:
+    build:
+      context: ./v2-remediada/nginx
+    container_name: billetera_v2_nginx
+    ports:
+      - "8443:443"
+      - "8090:80"
+    volumes:
+      - ./v2-remediada/app/src:/var/www/html:ro
+      - ./v2-remediada/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - v2-app
+    networks:
+      - billetera_v2_net
+    restart: unless-stopped
+
+  v2-app:
+    build:
+      context: ./v2-remediada/app
+    container_name: billetera_v2_app
+    volumes:
+      - ./v2-remediada/app/src:/var/www/html
+      - uploads_privados_v2:/var/www/uploads_privados
+    env_file:
+      - ./v2-remediada/.env
+    environment:
+      DB_HOST: v2-db
+      DB_NAME: billetera_v2
+      DB_USER: billetera_user
+      DB_PASS: ${DB_PASSWORD:-CambiaEstaClaveSegura2026!}
+    depends_on:
+      - v2-db
+    networks:
+      billetera_v2_net:
+        aliases:
+          - app
+    restart: unless-stopped
+
+  v2-db:
+    image: mysql:8.0
+    container_name: billetera_v2_db
+    env_file:
+      - ./v2-remediada/.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-OtraClaveSeguraDistinta2026!}
+      MYSQL_DATABASE: billetera_v2
+      MYSQL_USER: billetera_user
+      MYSQL_PASSWORD: ${DB_PASSWORD:-CambiaEstaClaveSegura2026!}
+    # SEC-FIX: puerto NO expuesto al host, a diferencia de v1-db
+    volumes:
+      - ./v2-remediada/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data_v2:/var/lib/mysql
+    networks:
+      - billetera_v2_net
+    restart: unless-stopped
+
+networks:
+  billetera_v1_net:
+    driver: bridge
+  billetera_v2_net:
+    driver: bridge
+
+volumes:
+  db_data_v1:
+  db_data_v2:
+  uploads_privados_v2:

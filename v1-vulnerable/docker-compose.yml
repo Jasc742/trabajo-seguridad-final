@@ -1,0 +1,55 @@
+
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: billetera_v1_app
+    ports:
+      - "8080:80"                      # HTTP plano, sin TLS (a proposito en V1)
+    volumes:
+      - ./app/src:/var/www/html        # bind mount para editar codigo en caliente
+    depends_on:
+      - db
+    networks:
+      - billetera_v1_net
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: billetera_v1_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root123          # VULN #11: credenciales debiles/hardcoded
+      MYSQL_DATABASE: billetera_v1
+      MYSQL_USER: billetera_user
+      MYSQL_PASSWORD: billetera123
+    ports:
+      - "3306:3306"                    # expuesto al host (mala practica intencional)
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data_v1:/var/lib/mysql
+    networks:
+      - billetera_v1_net
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: billetera_v1_pma
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root123
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    networks:
+      - billetera_v1_net
+    restart: unless-stopped
+
+networks:
+  billetera_v1_net:
+    driver: bridge
+
+volumes:
+  db_data_v1:
