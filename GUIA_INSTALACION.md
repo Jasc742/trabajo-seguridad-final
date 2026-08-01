@@ -142,6 +142,7 @@ cd v2-remediada  && docker compose up -d --build   # solo V2
 | Login no funciona en V2 | `.env` no configurado o hashes no coinciden | Revisar paso 2.1 y 2.2 |
 | Error 502 en Nginx | PHP-FPM (`app`) no esta listo aun | `docker compose restart nginx` |
 | Puerto ocupado | Otro servicio usando 8080/8443/3306/8090 | Cambiar el mapeo de puertos en `docker-compose.yml` |
+| Foto de perfil no se muestra en V2 (`perfil.php`) | El volumen `uploads_privados_v2` no fue creado o el contenedor `app` no tiene permisos sobre el | Revisar `docker compose logs app`; confirmar que el volumen existe con `docker volume ls` |
 
 ---
 

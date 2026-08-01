@@ -63,7 +63,9 @@ Caracteristicas clave:
 - HTTP (puerto 8090) redirige automaticamente a HTTPS.
 - MySQL no expone su puerto al host — solo accesible dentro de la red Docker.
 - Uploads de usuarios se almacenan fuera del `document root`, en un volumen 
-  separado (`uploads_privados_v2`), inaccesibles via URL directa.
+  separado (`uploads_privados_v2`), inaccesibles via URL directa. Se sirven 
+  unicamente a traves de `ver_foto.php`, que valida sesion, sanea la ruta 
+  con `basename()` y valida el MIME real antes de devolver el archivo.
 - Headers de seguridad HTTP activos (HSTS, CSP, X-Frame-Options, X-Content-Type-Options).
 
 ## Comparacion de superficie expuesta

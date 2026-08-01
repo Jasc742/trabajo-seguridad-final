@@ -34,6 +34,19 @@ billetera-digital-secdevops/
     └── mapeo-vulnerabilidades.md  <- tabla V1 -> V2 con las 13 vulnerabilidades
 ```
 
+## Funcionalidades principales
+
+| Pagina | Descripcion |
+|---|---|
+| `login.php` / `registro.php` | Autenticacion y alta de usuarios |
+| `index.php` | Dashboard con saldo y accesos rapidos |
+| `transferir.php` | Transferencias entre cuentas |
+| `historial.php` | Historial de transacciones con busqueda |
+| `perfil.php` | Datos de cuenta y subida de foto de perfil |
+| `ver_foto.php` (solo V2) | Sirve la foto de perfil desde el volumen privado, fuera del webroot |
+| `recuperar_password.php` | Recuperacion de contrasena |
+| `admin/panel.php` | Panel de administracion: listado de usuarios y gestion de roles |
+
 ## Inicio rapido
 
 ### Opcion A — Ambas versiones a la vez (un solo comando, desde la raiz)
@@ -55,7 +68,7 @@ docker compose up -d --build
 
 # V2 - remediada (HTTPS, puerto 8443)
 cd ../v2-remediada
-cp .env.example .env   # editar con tus propias claves
+cp .env.example .env   # editar con tus propias clavess
 docker compose up -d --build
 ```
 
